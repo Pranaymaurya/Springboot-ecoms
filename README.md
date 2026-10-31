@@ -1,189 +1,610 @@
-# Commerce Platform
+🛒 Commerce Platform
 
-A Java-based e-commerce backend built as a set of Spring Boot services. It explores how a traditional commerce application can be split into independently organized services for customer accounts, product catalog, orders, and inventory, with service discovery and a single API entry point.
+A Java-based E-Commerce Microservices Platform built using Spring Boot and Spring Cloud. The project demonstrates how a traditional monolithic commerce application can be decomposed into independently deployable services for user management, product catalog, order processing, and inventory management.
 
-> **Project status:** Core account, catalog, order, and inventory flows are implemented. Payment is currently a scaffold, and the checkout workflow is not yet a production-ready distributed transaction.
+It follows a microservices architecture with centralized API routing, service discovery, JWT-based authentication, and synchronous inter-service communication.
 
-## What this project does
+Project Status: Core user, catalog, order, and inventory functionalities are implemented. Payment processing is currently a scaffold, and the checkout workflow is not yet production-ready.
+📌 Table of Contents
+Overview
+Architecture
+Microservices
+Technology Stack
+Key Features
+Checkout Workflow
+Project Structure
+Prerequisites
+Database Configuration
+Getting Started
+API Endpoints
+Authentication and Security
+Testing
+Current Limitations
+Future Improvements
+Contributing
+License
+🚀 Overview
 
-The project provides REST APIs for customer registration and login, profile and address management, product catalog operations, order creation and lookup, and inventory management. Customers authenticate with a JWT. During checkout, the User service delegates order requests to Orders, which persists the order and asks Inventory to reserve stock.
+Commerce Platform is a distributed e-commerce backend developed using Spring Boot, Spring Cloud, PostgreSQL, and Maven.
 
-The goal is to demonstrate service boundaries, API routing, service discovery, token-based security, persistence, and synchronous service-to-service communication in a practical e-commerce domain. The services are separate Maven applications rather than modules in a shared root build.
+The application is divided into independent Spring Boot services, each responsible for a specific business domain.
 
-## Architecture
+The primary objective is to demonstrate practical microservices concepts, including:
 
-```mermaid
-flowchart LR
-    Client[Web or API client]
-    Gateway[API Gateway<br/>Spring Cloud Gateway]
-    Registry[Eureka registry]
+Independent service development and deployment.
+Service discovery using Netflix Eureka.
+Centralized API routing using Spring Cloud Gateway.
+Secure authentication using JWT.
+Synchronous service communication using OpenFeign.
+Database ownership and persistence using Spring Data JPA.
+Inventory reservation during order processing.
+Separation of business responsibilities across services.
 
-    subgraph Services[Spring Boot services]
-        User[User service<br/>accounts, addresses, JWT]
-        Catalog[Catalog service<br/>products]
-        Orders[Orders service<br/>orders]
-        Inventory[Inventory service<br/>stock, reservations]
-        Payment[Payment service<br/>scaffold only]
+Each business service is maintained as an independent Maven application rather than a module in a shared multi-module Maven project.
+
+🏗️ Architecture
+
+The application follows a microservices architecture in which each service handles a specific business responsibility and maintains its own database.
+
+System Architecture
+mermaid
+flowchart TD
+    Client[Client Application]
+
+    Gateway[API Gateway<br/>Port 8080]
+    Eureka[Eureka Server<br/>Port 8761]
+
+    subgraph Microservices
+        User[User Service<br/>Port 8082]
+        Catalog[Catalog Service<br/>Port 8085]
+        Orders[Orders Service<br/>Port 8083]
+        Inventory[Inventory Service<br/>Port 8084]
+        Payment[Payment Service<br/>Scaffold]
     end
 
-    UserDB[(PostgreSQL<br/>ecommerce_user)]
-    CatalogDB[(PostgreSQL<br/>ecommerce_product)]
-    OrdersDB[(PostgreSQL<br/>ecommerce_orders)]
-    InventoryDB[(PostgreSQL<br/>ecommerce_inventory)]
+    subgraph Databases
+        UserDB[(User Database)]
+        CatalogDB[(Catalog Database)]
+        OrdersDB[(Orders Database)]
+        InventoryDB[(Inventory Database)]
+    end
 
     Client --> Gateway
-    Gateway -. service lookup .-> Registry
+
+    Gateway -. Service Discovery .-> Eureka
+
     Gateway --> User
     Gateway --> Catalog
     Gateway --> Orders
     Gateway --> Inventory
-    User -. registers .-> Registry
-    Catalog -. registers .-> Registry
-    Orders -. registers .-> Registry
-    Inventory -. registers .-> Registry
+
+    User -. Registers .-> Eureka
+    Catalog -. Registers .-> Eureka
+    Orders -. Registers .-> Eureka
+    Inventory -. Registers .-> Eureka
+
     User --> UserDB
     Catalog --> CatalogDB
     Orders --> OrdersDB
     Inventory --> InventoryDB
+
     User -- OpenFeign --> Orders
-    Orders -- OpenFeign: reserve/release stock --> Inventory
-```
+    Orders -- OpenFeign --> Inventory
 
-Each business service owns its persistence boundary. Eureka provides service discovery for load-balanced gateway routes and Feign calls. The gateway is configured on port `8080`; Payment also defaults to `8080`, so run Payment on a different port if you want to run both at once.
+Architecture Components
+Component	Responsibility
+API Gateway	Centralized entry point for client requests
+Eureka Server	Service registration and discovery
+User Service	Customer accounts, authentication, profiles, and addresses
+Catalog Service	Product management and catalog operations
+Orders Service	Order creation and retrieval
+Inventory Service	Stock management and inventory reservations
+Payment Service	Future payment processing integration
+Communication Strategy
 
-### Checkout request flow
+The application uses two primary communication mechanisms:
 
-1. A customer registers at `POST /api/users` and logs in at `POST /api/auth/login`.
-2. User returns a signed bearer JWT. Protected services validate the token independently.
-3. The client submits an order through the User order routes or directly to Orders.
-4. User forwards the request and bearer token to Orders through Eureka and OpenFeign.
-5. Orders derives the customer identity from the token, saves the order, then calls Inventory to reserve stock.
-6. Inventory stores reservations and updates stock transactionally.
+Client-to-Service: HTTP requests are routed through Spring Cloud Gateway.
+Service-to-Service: OpenFeign clients communicate with other services using Eureka-based service discovery.
 
-The current checkout does **not** call Catalog to verify product prices, and Payment is not part of the checkout flow. The order and inventory operations do not share an atomic transaction; durable saga orchestration and reconciliation are future work.
+Each business service maintains its own persistence boundary using PostgreSQL.
 
-## Services
+🧩 Microservices
 
-| Service | Port | Responsibility | Current state |
-|---|---:|---|---|
-| `api-gateway` | 8080 | Routes external HTTP requests to services discovered by Eureka. | Routes are configured for user/auth, catalog, orders, and inventory APIs. |
-| `eureka` | 8761 | Service registry and discovery. | Eureka Server. |
-| `user` | 8082 | Registration, login/JWT issuance, profiles, addresses, and order facade. | Implemented; calls Orders using OpenFeign. |
-| `orders` | 8083 | Create and retrieve customer orders. | Implemented; requests stock reservations from Inventory. |
-| `inventory` | 8084 | Stock lookup/updates, order reservations, and reservation release. | Implemented. |
-| `catalog` | 8085 | Product listing and product CRUD. | Implemented. |
-| `payment` | 8080 by default | Future payment processing. | Bootstrap only; no payment API or checkout integration yet. |
+The repository contains seven independently organized Spring Boot applications.
 
-The API Gateway currently does not include a route for the User address endpoints (`/api/addresses/**`). Services can also be called directly on their local ports during development.
+Service	Port	Description	Status
+API Gateway	8080	Routes external requests to downstream services	Implemented
+Eureka Server	8761	Service registry and discovery	Implemented
+User Service	8082	Registration, authentication, profiles, addresses	Implemented
+Orders Service	8083	Order creation and retrieval	Implemented
+Inventory Service	8084	Stock management and reservations	Implemented
+Catalog Service	8085	Product listing and CRUD operations	Implemented
+Payment Service	8080*	Payment processing foundation	Scaffold
 
-## Technology stack
+Payment uses port 8080 by default, which conflicts with the API Gateway. Configure a different port if both applications need to run simultaneously.
 
-| Area | Technologies |
-|---|---|
-| Language/runtime | Java 21 |
-| Application framework | Spring Boot 4.1.1 for business services and Eureka; Spring Boot 4.1.2 for the API Gateway |
-| Service communication | Spring Cloud OpenFeign for synchronous HTTP clients |
-| Gateway and discovery | Spring Cloud Gateway (WebFlux), Netflix Eureka |
-| REST APIs | Spring MVC |
-| Persistence | Spring Data JPA, Hibernate, PostgreSQL JDBC driver |
-| Security | Spring Security, OAuth 2.0 Resource Server, JWT (HS256), BCrypt password hashing |
-| Build | Maven, with a Maven Wrapper in each service |
-| Testing | Spring Boot test starters, JUnit, and Reactor test support for the Gateway |
-| Boilerplate | Lombok |
+1. User Service
 
-The business services and Eureka import Spring Cloud BOM `2025.1.3`; the Gateway imports `2025.1.4`. There is no frontend application, message broker, Docker setup, or root-level Maven aggregator in this repository.
+Responsible for customer-related operations and authentication.
 
-## Repository layout
+Responsibilities:
 
-```text
-api-gateway/   Gateway routes and Eureka client
-catalog/       Product REST API and persistence
-eureka/        Service registry
-inventory/     Stock and reservation APIs
-orders/        Order APIs and Inventory Feign client
-payment/       Payment application scaffold
-user/          Customer, address, authentication, and Orders Feign client
-AUTHENTICATION.md       Authentication and authorization details
-MICROSERVICE-ROADMAP.md Current-state assessment and future work
-```
+Customer registration.
+Customer login.
+JWT token generation.
+Customer profile management.
+Address management.
+Customer order operations.
+Forwarding order requests to Orders Service using OpenFeign.
+2. Catalog Service
 
-## Getting started
+Responsible for managing the product catalog.
 
-### Prerequisites
+Responsibilities:
 
-- JDK 21
-- PostgreSQL
-- The configured databases: `ecommerce_user`, `ecommerce_product`, `ecommerce_orders`, and `ecommerce_inventory`
+Product creation.
+Product listing.
+Product retrieval.
+Product updates.
+Product deletion.
+Persistent product storage using PostgreSQL.
+3. Orders Service
 
-Some services currently store local database credentials and the shared development JWT signing key in their `src/main/resources/application.properties`. These values are still tracked source files; `.gitignore` does not hide them. Replace them with environment-based configuration before publishing, and rotate any value that has been used outside a disposable local environment. Never reuse development values in production.
+Responsible for order processing and order management.
 
-### Run the services
+Responsibilities:
 
-Open a terminal per service. Start Eureka first, then the services that use it, and start the Gateway after the registry and downstream services are available:
+Creating customer orders.
+Retrieving orders.
+Retrieving individual orders.
+Identifying customers using JWT claims.
+Communicating with Inventory Service.
+Initiating inventory reservations during order creation.
+4. Inventory Service
 
-```powershell
+Responsible for managing product stock and inventory reservations.
+
+Responsibilities:
+
+Stock lookup.
+Stock updates.
+Inventory reservation.
+Reservation retrieval.
+Reservation release.
+Transactional inventory updates.
+5. API Gateway
+
+Provides a centralized entry point for accessing backend services.
+
+Responsibilities:
+
+Routing incoming HTTP requests.
+Service discovery through Eureka.
+Load-balanced service routing.
+Centralized API entry point.
+6. Eureka Server
+
+Provides service registration and discovery.
+
+Responsibilities:
+
+Registering service instances.
+Maintaining service discovery information.
+Supporting load-balanced routing.
+Enabling service-to-service discovery.
+7. Payment Service
+
+Payment is currently a bootstrap application.
+
+Payment APIs, payment authorization, payment capture, and checkout integration have not yet been implemented.
+
+✨ Key Features
+Microservices Architecture: Independent services organized around business capabilities.
+JWT Authentication: Secure customer authentication using signed JWT tokens.
+Password Security: BCrypt password hashing.
+API Gateway: Centralized request routing using Spring Cloud Gateway.
+Service Discovery: Dynamic service registration using Netflix Eureka.
+Inter-Service Communication: Synchronous HTTP communication using Spring Cloud OpenFeign.
+Database Persistence: PostgreSQL integration using Spring Data JPA and Hibernate.
+Inventory Management: Stock tracking and reservation management.
+Order Management: Customer order creation and retrieval.
+Independent Builds: Each service has its own Maven project and Maven Wrapper.
+🔄 Checkout Workflow
+
+The current checkout process demonstrates synchronous communication between User, Orders, and Inventory services.
+
+Request Flow
+Customer registers using the User Service.
+Customer logs in and receives a JWT access token.
+Customer submits an order request.
+User Service forwards the request to Orders Service using OpenFeign.
+The bearer token is forwarded along with the request.
+Orders Service extracts the customer identity from the JWT.
+Orders Service persists the order.
+Orders Service requests an inventory reservation from Inventory Service.
+Inventory Service updates stock and stores the reservation transactionally.
+Checkout Sequence Diagram
+mermaid
+sequenceDiagram
+    participant Client
+    participant Gateway
+    participant User
+    participant Orders
+    participant Inventory
+    participant DB as PostgreSQL
+
+    Client->>Gateway: POST /api/auth/login
+    Gateway->>User: Login Request
+    User-->>Client: JWT Token
+
+    Client->>Gateway: Create Order + Bearer Token
+    Gateway->>User: Forward Request
+
+    User->>Orders: OpenFeign: Create Order
+    Orders->>Orders: Validate JWT
+    Orders->>DB: Save Order
+    DB-->>Orders: Order Saved
+
+    Orders->>Inventory: Reserve Stock
+    Inventory->>DB: Update Stock & Save Reservation
+    DB-->>Inventory: Reservation Saved
+
+    Inventory-->>Orders: Reservation Response
+    Orders-->>User: Order Response
+    User-->>Client: HTTP Response
+
+Important: The current checkout implementation does not verify product prices through Catalog Service and does not integrate Payment Service. Order persistence and inventory reservation are separate operations, not one distributed atomic transaction. Failure recovery, durable saga orchestration, and reconciliation are future improvements.
+🛠️ Technology Stack
+Category	Technologies
+Programming Language	Java 21
+Backend Framework	Spring Boot 4.1.1 / 4.1.2
+Microservices	Spring Cloud
+API Gateway	Spring Cloud Gateway
+Service Discovery	Netflix Eureka
+Service Communication	Spring Cloud OpenFeign
+REST APIs	Spring MVC
+Security	Spring Security
+Authentication	JWT (HS256)
+Password Encryption	BCrypt
+ORM	Hibernate
+Persistence	Spring Data JPA
+Database	PostgreSQL
+Build Tool	Maven
+Testing	JUnit, Spring Boot Test, Reactor Test
+Boilerplate Reduction	Lombok
+
+Spring Cloud Configuration:
+
+Business services and Eureka use Spring Cloud BOM 2025.1.3.
+API Gateway uses Spring Cloud BOM 2025.1.4.
+📁 Project Structure
+text
+Commerce-Platform/
+│
+├── api-gateway/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── catalog/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── eureka/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── inventory/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── orders/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── payment/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── user/
+│   ├── src/
+│   ├── pom.xml
+│   └── mvnw
+│
+├── AUTHENTICATION.md
+├── MICROSERVICE-ROADMAP.md
+├── .gitignore
+└── README.md
+
+
+Each service is an independent Maven application with its own dependencies, configuration, and build lifecycle.
+
+⚙️ Prerequisites
+
+Before running the application, make sure the following are installed:
+
+Requirement	Version
+Java JDK	21
+PostgreSQL	Compatible version
+Maven	Optional (Maven Wrapper included)
+Git	Latest stable version
+
+Verify Java installation:
+
+bash
+java -version
+
+
+Verify Git installation:
+
+bash
+git --version
+
+🗄️ Database Configuration
+
+The application uses four separate PostgreSQL databases.
+
+Create the following databases before starting the services:
+
+sql
+CREATE DATABASE ecommerce_user;
+CREATE DATABASE ecommerce_product;
+CREATE DATABASE ecommerce_orders;
+CREATE DATABASE ecommerce_inventory;
+
+Database Mapping
+Service	Database
+User Service	ecommerce_user
+Catalog Service	ecommerce_product
+Orders Service	ecommerce_orders
+Inventory Service	ecommerce_inventory
+
+Configure the database connection properties in each service's application.properties.
+
+Example:
+
+properties
+spring.datasource.url=jdbc:postgresql://localhost:5432/ecommerce_user
+spring.datasource.username=${DB_USERNAME}
+spring.datasource.password=${DB_PASSWORD}
+
+
+Use environment variables or an external secrets manager for database credentials.
+
+Security Note: Some current configurations contain locally stored database credentials and a shared development JWT signing key. Replace these values with environment-based configuration before publishing the repository. Rotate any credentials or signing keys that have been exposed outside a disposable local environment.
+
+🚀 Getting Started
+1. Clone the Repository
+bash
+git clone <YOUR_GITHUB_REPOSITORY_URL>
+
+
+Navigate into the project:
+
+bash
+cd Commerce-Platform
+
+2. Configure PostgreSQL
+
+Start PostgreSQL and create the four databases listed in the database configuration section.
+
+Update the database connection properties for each service.
+
+3. Start Eureka Server
+
+Eureka should be started first because the other services register themselves with the registry.
+
+powershell
 cd eureka
 .\mvnw.cmd spring-boot:run
-```
 
-```powershell
+
+Eureka Dashboard:
+
+text
+http://localhost:8761
+
+4. Start User Service
+
+Open a new terminal:
+
+powershell
 cd user
 .\mvnw.cmd spring-boot:run
-```
 
-```powershell
+5. Start Catalog Service
+powershell
 cd catalog
 .\mvnw.cmd spring-boot:run
-```
 
-```powershell
+6. Start Inventory Service
+powershell
 cd inventory
 .\mvnw.cmd spring-boot:run
-```
 
-```powershell
+7. Start Orders Service
+powershell
 cd orders
 .\mvnw.cmd spring-boot:run
-```
 
-```powershell
+8. Start API Gateway
+
+Once Eureka and the downstream services are available:
+
+powershell
 cd api-gateway
 .\mvnw.cmd spring-boot:run
-```
 
-Run a module's tests from that module's directory:
 
-```powershell
+The API Gateway will be available at:
+
+text
+http://localhost:8080
+
+Service Startup Order
+text
+1. PostgreSQL
+      ↓
+2. Eureka Server
+      ↓
+3. User Service
+4. Catalog Service
+5. Inventory Service
+6. Orders Service
+      ↓
+7. API Gateway
+
+
+Open a separate terminal for each service.
+
+Note: Payment Service is optional and is not required for the current application workflow.
+
+🌐 API Endpoints
+
+The following table provides an overview of the available API routes.
+
+Service	Endpoint	Description
+User	POST /api/users	Register a customer
+User	POST /api/auth/login	Authenticate a customer
+User	/api/addresses/**	Address management
+User	/api/users/{userId}/orders/**	Customer order operations
+Catalog	/api/products	Product management
+Orders	POST /orders	Create an order
+Orders	GET /orders	Retrieve orders
+Orders	GET /orders/{id}	Retrieve an order by ID
+Inventory	/inventory/{productId}	Stock operations
+Inventory	/reservations	Inventory reservations
+Inventory	/reservations/order/{orderId}	Retrieve reservations by order
+API Access
+
+During development, services can be accessed directly using their respective ports.
+
+Alternatively, use the API Gateway:
+
+text
+http://localhost:8080
+
+Note: The API Gateway currently does not have a configured route for /api/addresses/**. Address endpoints can be accessed directly through the User Service on port 8082.
+
+Refer to individual service controllers for complete HTTP methods, request payloads, and response structures.
+
+🔐 Authentication and Security
+
+The application uses JWT-based authentication with Spring Security.
+
+Authentication Flow
+Customer registers through User Service.
+Customer submits login credentials.
+User Service verifies the password using BCrypt.
+A signed JWT is generated using HS256.
+The client includes the token in subsequent protected requests.
+
+Example authorization header:
+
+http
+Authorization: Bearer <JWT_TOKEN>
+
+
+Protected services independently validate incoming JWTs.
+
+Security Components
+JWT-based authentication.
+HS256 token signing.
+Spring Security Resource Server.
+BCrypt password hashing.
+Bearer token forwarding between services.
+
+For detailed authentication configuration, JWT claims, and service-specific authorization rules, refer to:
+
+AUTHENTICATION.md
+
+🧪 Testing
+
+Each service maintains its own test suite.
+
+To execute tests, navigate to the respective service directory and run:
+
+powershell
 .\mvnw.cmd test
-```
 
-Each service is an independent Maven project, so build or test modules individually. Payment is optional and currently only starts its scaffold; if started alongside the Gateway, override one of their ports to avoid the default port conflict.
 
-## API overview
+Example:
 
-| Service | Example endpoints |
-|---|---|
-| User | `POST /api/users`, `POST /api/auth/login`, `/api/addresses/**`, `/api/users/{userId}/orders/**` |
-| Catalog | `/api/products` |
-| Orders | `POST /orders`, `GET /orders`, `GET /orders/{id}` |
-| Inventory | `/inventory/{productId}`, `/reservations`, `/reservations/order/{orderId}` |
+powershell
+cd orders
+.\mvnw.cmd test
 
-See the controllers in each service for the full methods and request/response shapes. For JWT claims, token forwarding, and service-specific access rules, see [AUTHENTICATION.md](./AUTHENTICATION.md).
 
-## Known gaps and next steps
+Repeat this process for the other services.
 
-- Integrate Catalog into checkout so Orders uses authoritative product data and prices.
-- Implement payment APIs and connect payment authorization/capture to checkout.
-- Add durable order-state orchestration, idempotent retry handling, and inventory reconciliation.
-- Add role-based authorization for administrative product and stock operations.
-- Externalize credentials and JWT keys; use database migrations instead of relying on Hibernate schema updates.
-- Add API contract documentation, observability, and repeatable local infrastructure (for example, PostgreSQL and services via Docker Compose).
+Since the repository contains independent Maven applications, tests and builds must be executed separately for each service.
 
-## Before publishing on GitHub
+⚠️ Current Limitations
 
-- Replace the local database credentials and JWT signing keys in tracked service configuration; `.gitignore` does not hide values in `application.properties`. Rotate any values that have ever been used outside a disposable local environment.
-- Confirm generated build output, JVM crash dumps, logs, and local environment files are not staged. The root `.gitignore` excludes common generated output and local secrets.
-- Add a `LICENSE` file if you want others to have clear permission to use, modify, and redistribute the project.
-- Review [AUTHENTICATION.md](./AUTHENTICATION.md) and [MICROSERVICE-ROADMAP.md](./MICROSERVICE-ROADMAP.md) for security and implementation limitations before describing the project as production-ready.
-#   S p r i n g b o o t - e c o m s  
- 
+The project demonstrates core microservices concepts but is not yet production-ready.
+
+Known limitations include:
+
+Payment Service is currently a scaffold.
+Checkout does not verify product prices through Catalog Service.
+Payment authorization and capture are not integrated.
+Order creation and inventory reservation do not participate in a shared distributed transaction.
+Durable saga orchestration and compensation workflows are not implemented.
+Retry handling and idempotency mechanisms need improvement.
+Administrative authorization for product and inventory operations needs further development.
+Credentials and JWT signing keys require complete externalization.
+Database schema management currently relies on Hibernate rather than a migration framework.
+API documentation and centralized observability are not yet implemented.
+Address API routes are not currently exposed through the API Gateway.
+🛣️ Future Improvements
+
+The following improvements are planned to make the platform more robust and production-oriented.
+
+Integrate Catalog Service into the checkout workflow.
+Implement payment APIs and payment gateway integration.
+Implement order lifecycle management.
+Introduce Saga Pattern for distributed transaction management.
+Add compensating transactions for failed inventory reservations.
+Implement idempotent request handling and retry mechanisms.
+Add role-based access control for administrative operations.
+Externalize all credentials and JWT signing keys.
+Introduce Flyway or Liquibase for database migrations.
+Add Swagger/OpenAPI documentation.
+Implement centralized logging and distributed tracing.
+Add Docker and Docker Compose for local development.
+Improve automated unit and integration test coverage.
+Add CI/CD pipelines using GitHub Actions.
+🤝 Contributing
+
+Contributions, suggestions, and feedback are welcome.
+
+If you would like to contribute:
+
+Fork the repository.
+Create a new feature branch.
+Make your changes.
+Run the relevant service tests.
+Commit and push your changes.
+Open a Pull Request.
+
+For major changes, consider opening an issue first to discuss the proposed improvements.
+
+📄 License
+
+This project currently does not specify a license.
+
+If you intend to make it open source, consider adding a LICENSE file to define how others may use, modify, and distribute the project.
+
+👨‍💻 About the Project
+
+Commerce Platform is a backend development project focused on exploring Java, Spring Boot, Spring Cloud, and Microservices Architecture through a practical e-commerce application.
+
+It demonstrates the implementation of independently organized services, service discovery, centralized API routing, JWT authentication, database persistence, and synchronous inter-service communication.
+
+Built with Java 21 and Spring Boot.
