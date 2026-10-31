@@ -1,0 +1,45 @@
+unit: catalog-product-api
+bindings:
+  - type: route-declaration
+    name: "GET /api/products/{id}"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:27
+    target: "productController.getProductById"
+    must_appear_in_target: true
+    notes: "Returns Product JSON."
+  - type: route-declaration
+    name: "GET /api/products"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:32
+    target: "productController.getallProduct"
+    must_appear_in_target: true
+    notes: "Returns List<Product> JSON."
+  - type: route-declaration
+    name: "POST /api/products"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:37
+    target: "productController.createProduct"
+    must_appear_in_target: true
+    notes: "Consumes Product JSON."
+  - type: route-declaration
+    name: "PUT /api/products/{id}"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:42
+    target: "productController.updateProduct"
+    must_appear_in_target: true
+    notes: "Consumes Product JSON."
+  - type: route-declaration
+    name: "DELETE /api/products/{id}"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:51
+    target: "productController.deleteProduct"
+    must_appear_in_target: true
+    notes: "Returns 204 on successful deletion."
+  - type: filter
+    name: "HTTP Basic SecurityFilterChain"
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/config/SecurityConfig.java:14
+    target: "All HTTP requests"
+    must_appear_in_target: true
+    notes: "CSRF is disabled; every request is authenticated using HTTP Basic."
+runtime_config:
+  - key: "spring.application.name"
+    source_loc: catalog/src/main/resources/application.properties:1
+    source: properties-file
+    default_value: "catalog"
+    must_appear_in_target: true
+    notes: "Application identity configured in module properties."

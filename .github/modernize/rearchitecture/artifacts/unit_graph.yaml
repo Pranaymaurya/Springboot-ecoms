@@ -1,0 +1,80 @@
+units:
+  - name: catalog-product-api
+    trigger: api
+    trigger_detail: "HTTP CRUD endpoints under /api/products"
+    source_anchors:
+      - path: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java
+        line: 18
+      - path: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java
+        line: 19
+      - path: catalog/src/main/java/com/ecommerce/catalog/repo/ProductRepo.java
+        line: 7
+      - path: catalog/src/main/java/com/ecommerce/catalog/model/Product.java
+        line: 10
+    exported_signature: []
+    dynamic_entrypoints:
+      - target: com.ecommerce.catalog.controller.productController
+        mechanism: annotation-scan
+        source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:18
+    depends_on: []
+    shared_refs: []
+
+  - name: user-account-api
+    trigger: api
+    trigger_detail: "HTTP CRUD endpoints under /api/users"
+    source_anchors:
+      - path: user/src/main/java/com/ecommerce/user/controller/userController.java
+        line: 22
+      - path: user/src/main/java/com/ecommerce/user/service/UserService.java
+        line: 11
+    exported_signature: []
+    dynamic_entrypoints:
+      - target: com.ecommerce.user.controller.userController
+        mechanism: annotation-scan
+        source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:21
+    depends_on: []
+    shared_refs:
+      - module: user-model
+        used_fields: [id, name, email, password, addresses]
+      - module: address-model
+        used_fields: [id, street, locality, pincode, user]
+      - module: user-repository
+        used_fields: [findById, findAll, save, delete]
+
+  - name: user-address-api
+    trigger: api
+    trigger_detail: "HTTP address endpoints under /api/addresses"
+    source_anchors:
+      - path: user/src/main/java/com/ecommerce/user/controller/addressController.java
+        line: 15
+      - path: user/src/main/java/com/ecommerce/user/service/AddressService.java
+        line: 20
+      - path: user/src/main/java/com/ecommerce/user/repo/AddressRepo.java
+        line: 10
+    exported_signature: []
+    dynamic_entrypoints:
+      - target: com.ecommerce.user.controller.addressController
+        mechanism: annotation-scan
+        source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:14
+    depends_on: []
+    shared_refs:
+      - module: user-model
+        used_fields: [id, name, email, password, addresses]
+      - module: address-model
+        used_fields: [id, street, locality, pincode, user]
+      - module: user-repository
+        used_fields: [findById, existsById]
+
+  - name: eureka-registry-runtime
+    trigger: api
+    trigger_detail: "Eureka Server application on configured port 8761; registry endpoints are framework-provided"
+    source_anchors:
+      - path: eureka/src/main/java/com/ecommerce/eureka/EurekaApplication.java
+        line: 8
+    exported_signature: []
+    dynamic_entrypoints:
+      - target: com.ecommerce.eureka.EurekaApplication
+        mechanism: annotation-scan
+        source_loc: eureka/src/main/java/com/ecommerce/eureka/EurekaApplication.java:8
+    depends_on: []
+    shared_refs: []

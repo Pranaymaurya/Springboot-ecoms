@@ -1,0 +1,42 @@
+unit: catalog-product-api
+side_effects:
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:19
+    effect: "Create clears the supplied ID and persists the Product through ProductRepo."
+    must_preserve: true
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:47
+    effect: "Update persists the existing Product after copying name, desc, and price."
+    must_preserve: true
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:57
+    effect: "Delete removes the found Product through ProductRepo."
+    must_preserve: true
+branches:
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:31
+    condition: "ProductRepo.findById(id) returns empty."
+    behavior: "Throws RuntimeException with product-not-found message."
+    must_preserve: true
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:39
+    condition: "ProductRepo.findById(id) returns empty during update."
+    behavior: "Throws RuntimeException; no updated Product is saved."
+    must_preserve: true
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:53
+    condition: "ProductRepo.findById(id) returns empty during delete."
+    behavior: "Throws RuntimeException; no delete is performed."
+    must_preserve: true
+error_paths:
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:32
+    trigger: "Requested product ID does not exist."
+    outcome: "RuntimeException is thrown; no explicit controller advice or HTTP status mapping was found."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+  - source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:40
+    trigger: "Requested product ID does not exist during update."
+    outcome: "RuntimeException is thrown; no update is saved."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/service/ProductService.java:19
+    scope: "No service-level @Transactional boundary is declared; individual Spring Data repository operations are used."
+    isolation: "Not specified in source."
+    must_preserve: true

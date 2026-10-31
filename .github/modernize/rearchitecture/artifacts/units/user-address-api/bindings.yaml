@@ -1,0 +1,123 @@
+unit: user-address-api
+bindings:
+  - type: route-declaration
+    name: "POST /api/addresses/user/{userId}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:22
+    target: "addressController.createAddress"
+    must_appear_in_target: true
+    notes: "Consumes Address JSON; successful response uses HTTP 201."
+  - type: route-declaration
+    name: "GET /api/addresses"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:32
+    target: "addressController.getAllAddresses"
+    must_appear_in_target: true
+    notes: "Returns List<Address> JSON."
+  - type: route-declaration
+    name: "GET /api/addresses/{id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:38
+    target: "addressController.getAddressById"
+    must_appear_in_target: true
+    notes: "Returns Address JSON."
+  - type: route-declaration
+    name: "GET /api/addresses/user/{userId}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:46
+    target: "addressController.getAddressesByUserId"
+    must_appear_in_target: true
+    notes: "Checks that the user exists before returning addresses."
+  - type: route-declaration
+    name: "PUT /api/addresses/{id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:55
+    target: "addressController.updateAddress"
+    must_appear_in_target: true
+    notes: "Consumes Address JSON."
+  - type: route-declaration
+    name: "DELETE /api/addresses/{id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:65
+    target: "addressController.deleteAddress"
+    must_appear_in_target: true
+    notes: "Returns 204 on successful deletion."
+  - type: annotation
+    name: "@Transactional"
+    source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:18
+    target: "AddressService"
+    must_appear_in_target: true
+    notes: "Service operations are transactional; reads use readOnly=true."
+  - type: filter
+    name: "HTTP Basic SecurityFilterChain"
+    source_loc: user/src/main/java/com/ecommerce/user/config/securityConfig.java:14
+    target: "All HTTP requests in user application"
+    must_appear_in_target: true
+    notes: "CSRF is disabled; every request is authenticated using HTTP Basic."
+runtime_config:
+  - key: "spring.application.name"
+    source_loc: user/src/main/resources/application.properties:1
+    source: properties-file
+    default_value: "user"
+    must_appear_in_target: true
+    notes: "Address API shares the user application runtime."
+  - key: "server.port"
+    source_loc: user/src/main/resources/application.properties:2
+    source: properties-file
+    default_value: "8081"
+    must_appear_in_target: true
+    notes: "Address API shares the user application HTTP port."
+  - key: "spring.datasource.url"
+    source_loc: user/src/main/resources/application.properties:5
+    source: properties-file
+    default_value: "PostgreSQL URL configured; value omitted."
+    must_appear_in_target: true
+    notes: "Address persistence currently uses the user application's database."
+  - key: "spring.datasource.username"
+    source_loc: user/src/main/resources/application.properties:6
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Credential must be externalized for shared/deployed environments."
+  - key: "spring.datasource.password"
+    source_loc: user/src/main/resources/application.properties:7
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Sensitive value is intentionally not copied into this artifact."
+  - key: "spring.datasource.driver-class-name"
+    source_loc: user/src/main/resources/application.properties:10
+    source: properties-file
+    default_value: "org.postgresql.Driver"
+    must_appear_in_target: true
+    notes: "PostgreSQL JDBC driver."
+  - key: "spring.jpa.hibernate.ddl-auto"
+    source_loc: user/src/main/resources/application.properties:13
+    source: properties-file
+    default_value: "update"
+    must_appear_in_target: true
+    notes: "Hibernate schema update behavior currently configured for this application."
+  - key: "spring.jpa.show-sql"
+    source_loc: user/src/main/resources/application.properties:14
+    source: properties-file
+    default_value: "true"
+    must_appear_in_target: true
+    notes: "SQL logging is enabled."
+  - key: "spring.jpa.properties.hibernate.format_sql"
+    source_loc: user/src/main/resources/application.properties:15
+    source: properties-file
+    default_value: "true"
+    must_appear_in_target: true
+    notes: "Hibernate SQL formatting is enabled."
+  - key: "spring.jpa.database-platform"
+    source_loc: user/src/main/resources/application.properties:16
+    source: properties-file
+    default_value: "org.hibernate.dialect.PostgreSQLDialect"
+    must_appear_in_target: true
+    notes: "Configured Hibernate database dialect."
+  - key: "spring.security.user.name"
+    source_loc: user/src/main/resources/application.properties:18
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Default HTTP Basic account is configured for the user application."
+  - key: "spring.security.user.password"
+    source_loc: user/src/main/resources/application.properties:19
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Sensitive value is intentionally not copied into this artifact."

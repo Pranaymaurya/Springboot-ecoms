@@ -1,0 +1,111 @@
+unit: user-account-api
+bindings:
+  - type: route-declaration
+    name: "GET /api/users/{Id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:31
+    target: "userController.getUserById"
+    must_appear_in_target: true
+    notes: "Returns User entity JSON."
+  - type: route-declaration
+    name: "DELETE /api/users/{Id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:36
+    target: "userController.deleteUserById"
+    must_appear_in_target: true
+    notes: "Service deletes the user; controller calls no-content builder."
+  - type: route-declaration
+    name: "GET /api/users"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:42
+    target: "userController.getUserAll"
+    must_appear_in_target: true
+    notes: "Returns List<User> JSON."
+  - type: route-declaration
+    name: "POST /api/users"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:47
+    target: "userController.createUser"
+    must_appear_in_target: true
+    notes: "Consumes User JSON and currently responds with status 210."
+  - type: route-declaration
+    name: "PUT /api/users/{Id}"
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:53
+    target: "userController.updateUser"
+    must_appear_in_target: true
+    notes: "User argument has no @RequestBody annotation in the inspected source."
+  - type: filter
+    name: "HTTP Basic SecurityFilterChain"
+    source_loc: user/src/main/java/com/ecommerce/user/config/securityConfig.java:14
+    target: "All HTTP requests in user application"
+    must_appear_in_target: true
+    notes: "CSRF is disabled; every request is authenticated using HTTP Basic."
+runtime_config:
+  - key: "spring.application.name"
+    source_loc: user/src/main/resources/application.properties:1
+    source: properties-file
+    default_value: "user"
+    must_appear_in_target: true
+    notes: "Application identity configured in module properties."
+  - key: "server.port"
+    source_loc: user/src/main/resources/application.properties:2
+    source: properties-file
+    default_value: "8081"
+    must_appear_in_target: true
+    notes: "Configured application HTTP port."
+  - key: "spring.datasource.url"
+    source_loc: user/src/main/resources/application.properties:5
+    source: properties-file
+    default_value: "PostgreSQL URL configured; value omitted."
+    must_appear_in_target: true
+    notes: "Currently points to the user service database."
+  - key: "spring.datasource.username"
+    source_loc: user/src/main/resources/application.properties:6
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Credential must be externalized for shared/deployed environments."
+  - key: "spring.datasource.password"
+    source_loc: user/src/main/resources/application.properties:7
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Sensitive value is intentionally not copied into this artifact."
+  - key: "spring.datasource.driver-class-name"
+    source_loc: user/src/main/resources/application.properties:10
+    source: properties-file
+    default_value: "org.postgresql.Driver"
+    must_appear_in_target: true
+    notes: "PostgreSQL JDBC driver."
+  - key: "spring.jpa.hibernate.ddl-auto"
+    source_loc: user/src/main/resources/application.properties:13
+    source: properties-file
+    default_value: "update"
+    must_appear_in_target: true
+    notes: "Hibernate schema update behavior currently configured for this application."
+  - key: "spring.jpa.show-sql"
+    source_loc: user/src/main/resources/application.properties:14
+    source: properties-file
+    default_value: "true"
+    must_appear_in_target: true
+    notes: "SQL logging is enabled."
+  - key: "spring.jpa.properties.hibernate.format_sql"
+    source_loc: user/src/main/resources/application.properties:15
+    source: properties-file
+    default_value: "true"
+    must_appear_in_target: true
+    notes: "Hibernate SQL formatting is enabled."
+  - key: "spring.jpa.database-platform"
+    source_loc: user/src/main/resources/application.properties:16
+    source: properties-file
+    default_value: "org.hibernate.dialect.PostgreSQLDialect"
+    must_appear_in_target: true
+    notes: "Configured Hibernate database dialect."
+  - key: "spring.security.user.name"
+    source_loc: user/src/main/resources/application.properties:18
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Default HTTP Basic account is configured in the properties file."
+  - key: "spring.security.user.password"
+    source_loc: user/src/main/resources/application.properties:19
+    source: properties-file
+    default_value: "Configured; value omitted."
+    must_appear_in_target: true
+    notes: "Sensitive value is intentionally not copied into this artifact."

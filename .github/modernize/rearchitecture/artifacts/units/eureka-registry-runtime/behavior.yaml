@@ -1,0 +1,7 @@
+unit: eureka-registry-runtime
+side_effects:
+  - source_loc: eureka/src/main/java/com/ecommerce/eureka/EurekaApplication.java:8
+    effect: "Enables the Eureka Server runtime for service registration and discovery."
+    must_preserve: true
+branches: []
+error_paths: []

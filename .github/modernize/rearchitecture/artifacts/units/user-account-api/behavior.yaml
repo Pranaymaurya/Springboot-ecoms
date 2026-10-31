@@ -1,0 +1,46 @@
+unit: user-account-api
+side_effects:
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:33
+    effect: "Create persists the supplied User through UserRepo."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:47
+    effect: "Update copies addresses, email, and name onto the existing User and saves it."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:29
+    effect: "Delete loads the User and removes it through UserRepo."
+    must_preserve: true
+branches:
+  - source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:48
+    condition: "User creation succeeds."
+    behavior: "Returns the saved User with status 210."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:20
+    condition: "UserRepo.findById(id) returns empty."
+    behavior: "Throws RuntimeException with user-not-found message."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:25
+    condition: "UserRepo.findById(id) returns empty during delete."
+    behavior: "Throws RuntimeException; no deletion is performed."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:42
+    condition: "UserRepo.findById(Id) returns empty during update."
+    behavior: "Throws RuntimeException; no update is saved."
+    must_preserve: true
+error_paths:
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:21
+    trigger: "Requested user ID does not exist."
+    outcome: "RuntimeException is thrown; no explicit controller advice or HTTP status mapping was found."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:42
+    trigger: "Requested user ID does not exist during update."
+    outcome: "RuntimeException is thrown; no explicit controller advice or HTTP status mapping was found."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: user/src/main/java/com/ecommerce/user/service/UserService.java:30
+    scope: "No service-level @Transactional boundary is declared; operations call Spring Data repository methods."
+    isolation: "Not specified in source."
+    must_preserve: true

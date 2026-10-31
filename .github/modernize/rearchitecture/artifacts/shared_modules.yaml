@@ -1,0 +1,60 @@
+modules:
+  - name: user-model
+    kind: dto
+    source_loc: user/src/main/java/com/ecommerce/user/model/User.java:19
+    used_by_units: [user-account-api, user-address-api]
+    fields:
+      - name: id
+        type: java.lang.Long
+      - name: name
+        type: java.lang.String
+      - name: email
+        type: java.lang.String
+      - name: password
+        type: java.lang.String
+      - name: addresses
+        type: java.util.List<com.ecommerce.user.model.Address>
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Shared persistence entity returned/used by both user and address operations."
+
+  - name: address-model
+    kind: dto
+    source_loc: user/src/main/java/com/ecommerce/user/model/Address.java:15
+    used_by_units: [user-account-api, user-address-api]
+    fields:
+      - name: id
+        type: java.lang.Long
+      - name: street
+        type: java.lang.String
+      - name: locality
+        type: java.lang.String
+      - name: pincode
+        type: java.lang.String
+      - name: user
+        type: com.ecommerce.user.model.User
+    god_class: false
+    split_candidate: false
+    migration_strategy: copy
+    notes: "Address is referenced by the User entity and managed by the address API."
+
+  - name: user-repository
+    kind: utility
+    source_loc: user/src/main/java/com/ecommerce/user/repo/UserRepo.java:8
+    used_by_units: [user-account-api, user-address-api]
+    fields:
+      - name: findById
+        type: "JpaRepository<User, Long> inherited method"
+      - name: findAll
+        type: "JpaRepository<User, Long> inherited method"
+      - name: save
+        type: "JpaRepository<User, Long> inherited method"
+      - name: delete
+        type: "JpaRepository<User, Long> inherited method"
+      - name: existsById
+        type: "JpaRepository<User, Long> inherited method"
+    god_class: false
+    split_candidate: false
+    migration_strategy: wrap
+    notes: "Both user and address services access the same Spring Data repository within the user application."

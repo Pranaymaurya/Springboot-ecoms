@@ -1,0 +1,42 @@
+unit: user-address-api
+side_effects:
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:25
+    effect: "Create loads the owning User, clears the supplied address ID, assigns the User, and saves the Address."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:64
+    effect: "Update copies street, locality, and pincode onto the existing Address and saves it."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:78
+    effect: "Delete removes the found Address through AddressRepo."
+    must_preserve: true
+branches:
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:27
+    condition: "UserRepo.findById(userId) returns empty during create."
+    behavior: "Throws EntityNotFoundException; address is not saved."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:55
+    condition: "UserRepo.existsById(userId) is false."
+    behavior: "Throws EntityNotFoundException before querying addresses."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:66
+    condition: "AddressRepo.findById(id) returns empty during update."
+    behavior: "Throws EntityNotFoundException; no update is saved."
+    must_preserve: true
+error_paths:
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:28
+    trigger: "Create references a user ID that does not exist."
+    outcome: "EntityNotFoundException is thrown; no explicit HTTP exception mapping was found."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+  - source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:46
+    trigger: "Requested address ID does not exist."
+    outcome: "EntityNotFoundException is thrown; no explicit HTTP exception mapping was found."
+    contract: "HTTP error status/body are not explicitly defined in source."
+    must_preserve: true
+concurrency:
+  model: sync
+  tx_boundary:
+    source_loc: user/src/main/java/com/ecommerce/user/service/AddressService.java:18
+    scope: "AddressService methods run within a class-level transaction; get/list methods override with readOnly=true."
+    isolation: "Not specified in source."
+    must_preserve: true

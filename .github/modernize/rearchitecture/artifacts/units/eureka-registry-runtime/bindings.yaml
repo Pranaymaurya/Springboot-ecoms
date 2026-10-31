@@ -1,0 +1,33 @@
+unit: eureka-registry-runtime
+bindings:
+  - type: annotation
+    name: "@EnableEurekaServer"
+    source_loc: eureka/src/main/java/com/ecommerce/eureka/EurekaApplication.java:8
+    target: "EurekaApplication"
+    must_appear_in_target: true
+    notes: "Enables framework-provided registry endpoints."
+runtime_config:
+  - key: "spring.application.name"
+    source_loc: eureka/src/main/resources/application.properties:1
+    source: properties-file
+    default_value: "eureka"
+    must_appear_in_target: true
+    notes: "Application identity configured in module properties."
+  - key: "server.port"
+    source_loc: eureka/src/main/resources/application.properties:2
+    source: properties-file
+    default_value: "8761"
+    must_appear_in_target: true
+    notes: "Configured registry server port."
+  - key: "eureka.client.register-with-eureka"
+    source_loc: eureka/src/main/resources/application.properties:4
+    source: properties-file
+    default_value: "false"
+    must_appear_in_target: true
+    notes: "Registry server does not register itself."
+  - key: "eureka.client.fetch-registry"
+    source_loc: eureka/src/main/resources/application.properties:5
+    source: properties-file
+    default_value: "false"
+    must_appear_in_target: true
+    notes: "Registry server does not fetch another registry."

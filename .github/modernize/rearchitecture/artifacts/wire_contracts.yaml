@@ -1,0 +1,272 @@
+contracts:
+  - name: product-by-id
+    unit: catalog-product-api
+    type: rest
+    stability: must_preserve
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:27
+    contract:
+      method: GET
+      path: /api/products/{id}
+      request: "Long path variable id"
+      response: "Product JSON"
+      error: "Missing product throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/products/{id} -> Product JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: product-list
+    unit: catalog-product-api
+    type: rest
+    stability: must_preserve
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:32
+    contract:
+      method: GET
+      path: /api/products
+      request: "No explicit request body"
+      response: "List<Product> JSON"
+      error: "No explicit error mapping in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/products -> List<Product> JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: product-create
+    unit: catalog-product-api
+    type: rest
+    stability: must_preserve
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:37
+    contract:
+      method: POST
+      path: /api/products
+      request: "Product JSON"
+      response: "Product JSON"
+      error: "No explicit validation/error mapping in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "POST /api/products -> Product JSON"
+      notes: "ProductService clears incoming ID before repository save."
+    semantic_divergence: []
+
+  - name: product-update
+    unit: catalog-product-api
+    type: rest
+    stability: must_preserve
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:42
+    contract:
+      method: PUT
+      path: /api/products/{id}
+      request: "Long path variable id and Product JSON"
+      response: "Product JSON"
+      error: "Missing product throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "PUT /api/products/{id} -> Product JSON"
+      notes: "Current update copies name, desc, and price."
+    semantic_divergence: []
+
+  - name: product-delete
+    unit: catalog-product-api
+    type: rest
+    stability: must_preserve
+    source_loc: catalog/src/main/java/com/ecommerce/catalog/controller/productController.java:51
+    contract:
+      method: DELETE
+      path: /api/products/{id}
+      request: "Long path variable id"
+      response: "204 No Content on successful deletion"
+      error: "Missing product throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "DELETE /api/products/{id} -> 204 No Content"
+      notes: "Observed current successful response."
+    semantic_divergence: []
+
+  - name: user-by-id
+    unit: user-account-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:31
+    contract:
+      method: GET
+      path: /api/users/{Id}
+      request: "Long path variable Id"
+      response: "User JSON"
+      error: "Missing user throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/users/{Id} -> User JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: user-delete
+    unit: user-account-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:36
+    contract:
+      method: DELETE
+      path: /api/users/{Id}
+      request: "Long path variable Id"
+      response: "Controller calls no-content builder; declared Java response type is ResponseEntity<User>."
+      error: "Missing user throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "DELETE /api/users/{Id} -> no-content response"
+      notes: "Observed controller behavior; reconcile generic response type with runtime status during API contract tests."
+    semantic_divergence: []
+
+  - name: user-list
+    unit: user-account-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:42
+    contract:
+      method: GET
+      path: /api/users
+      request: "No explicit request body"
+      response: "List<User> JSON"
+      error: "No explicit error mapping in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/users -> List<User> JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: user-create
+    unit: user-account-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:47
+    contract:
+      method: POST
+      path: /api/users
+      request: "User JSON"
+      response: "User JSON with HTTP status 210 as coded."
+      error: "No explicit validation/error mapping in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "POST /api/users -> User JSON; current configured status 210"
+      notes: "Record unusual current status explicitly; decide whether to retain/change it only through an approved API contract change."
+    semantic_divergence: []
+
+  - name: user-update
+    unit: user-account-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/userController.java:53
+    contract:
+      method: PUT
+      path: /api/users/{Id}
+      request: "Long path variable and User argument; @RequestBody is not present on the argument."
+      response: "User JSON"
+      error: "Missing user throws RuntimeException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "PUT /api/users/{Id} -> User JSON"
+      notes: "Current binding behavior needs an HTTP integration test before documenting a stable request-body schema."
+    semantic_divergence: []
+
+  - name: address-create-for-user
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:22
+    contract:
+      method: POST
+      path: /api/addresses/user/{userId}
+      request: "Address JSON and Long path variable userId"
+      response: "Address JSON with HTTP 201"
+      error: "Missing user throws EntityNotFoundException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "POST /api/addresses/user/{userId} -> 201 Address JSON"
+      notes: "AddressService assigns the owning User before save."
+    semantic_divergence: []
+
+  - name: address-list
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:32
+    contract:
+      method: GET
+      path: /api/addresses
+      request: "No explicit request body"
+      response: "List<Address> JSON"
+      error: "No explicit error mapping in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/addresses -> List<Address> JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: address-by-id
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:38
+    contract:
+      method: GET
+      path: /api/addresses/{id}
+      request: "Long path variable id"
+      response: "Address JSON"
+      error: "Missing address throws EntityNotFoundException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/addresses/{id} -> Address JSON"
+      notes: "Observed current route and direct entity response."
+    semantic_divergence: []
+
+  - name: addresses-by-user
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:46
+    contract:
+      method: GET
+      path: /api/addresses/user/{userId}
+      request: "Long path variable userId"
+      response: "List<Address> JSON"
+      error: "Unknown user throws EntityNotFoundException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "GET /api/addresses/user/{userId} -> List<Address> JSON"
+      notes: "Service checks user existence before repository query."
+    semantic_divergence: []
+
+  - name: address-update
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:55
+    contract:
+      method: PUT
+      path: /api/addresses/{id}
+      request: "Long path variable id and Address JSON"
+      response: "Address JSON"
+      error: "Missing address throws EntityNotFoundException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "PUT /api/addresses/{id} -> Address JSON"
+      notes: "Current service copies street, locality, and pincode."
+    semantic_divergence: []
+
+  - name: address-delete
+    unit: user-address-api
+    type: rest
+    stability: must_preserve
+    source_loc: user/src/main/java/com/ecommerce/user/controller/addressController.java:65
+    contract:
+      method: DELETE
+      path: /api/addresses/{id}
+      request: "Long path variable id"
+      response: "204 No Content on successful deletion"
+      error: "Missing address throws EntityNotFoundException; HTTP mapping is not explicitly defined in source."
+      auth: "HTTP Basic; all requests require authentication."
+    target_contract:
+      method: "DELETE /api/addresses/{id} -> 204 No Content"
+      notes: "Observed current successful response."
+    semantic_divergence: []
